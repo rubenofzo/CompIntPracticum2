@@ -73,9 +73,37 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newGhostPositions = successorGameState.getGhostPositions()
+        #calculate the total distance of the fastest path (using manhattan distances) between all foods
+        fastestPathThroughFood = minDistanceList(newPos, newFood.asList())
+        #calculate the distance to the closest ghost
+        closestGhostDistance = min(map(lambda xy2 : manhattanDistance(newPos,xy2), newGhostPositions))
+        #if a ghost is close and not scared => avoid succesor
+        if (closestGhostDistance < 2.0 and min(newScaredTimes)==0):
+            return -fastestPathThroughFood -1000
+        #if not then return the negative of the distance to all foods (as a bigger number should be better)
+        return -fastestPathThroughFood 
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+#finds the cheapest path from position to all positionsLeft
+def minDistanceList(position,positionList):
+    #if there are no positions to calculate distances to, the distance is 0
+    if positionList == []:
+        return 0
+    #make a list of mahattan distances from the position to everything in the positionList
+    distanceList = []
+    for pos in positionList:
+         distanceList.append(manhattanDistance(position,pos))
+    #find the closest coordinate in the list and the distance to it
+    closestDistance = min(distanceList)
+    positionFound = positionList[distanceList.index(closestDistance)]
+    positionList.remove(positionFound) #remove the found position from the list that is going to be searched next
+    #find the cheapest path from the new found position to the left over positions
+    return closestDistance + minDistanceList(positionFound,positionList)
+
+#calculates manhattanDistance between 2 points
+def manhattanDistance(xy1, xy2):
+     return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
