@@ -12,6 +12,9 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from asyncio.windows_events import NULL
+from ctypes.wintypes import BOOLEAN, INT
+from xmlrpc.client import Boolean
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -164,7 +167,40 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        bestAction = NULL
+        bestValue = -1000
+        actions = gameState.getLegalPacmanActions()
+        for action in actions:
+            newState = gameState.generateSuccessor(0, action)
+            value = minimax(self, newState, self.depth, 1)
+            if value > bestValue:
+               bestValue = value
+               bestAction = action
+        return bestAction
+
+def minimax(self, gameState: GameState, depth: INT, agentIndex: INT):
+    numAgents = gameState.getNumAgents()
+    actions = gameState.getLegalActions(agentIndex)
+    if depth == 0 or gameState.isWin() or gameState.isLose():
+         return self.evaluationFunction
+    else:
+         if agentIndex == 0:
+            bestValue = -10000
+            for action in actions:
+                      newNode = gameState.generateSuccessor(0, action)
+                      value = minimax(self, newNode, depth -1, 1 % numAgents)
+                      bestValue = max(bestValue, value)
+            return bestValue
+         else:
+            bestValue = +10000
+            for action in actions:
+                     newNode = gameState.generateSuccessor(agentIndex, action)
+                     value = minimax(self, newNode, depth -1, (agentIndex + 1) % numAgents)
+                     bestValue = min(bestValue, value)
+            return bestValue
+         
+            
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
