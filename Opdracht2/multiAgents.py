@@ -212,7 +212,55 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        numberOfAgents = gameState.getNumAgents();
+        # return a list of actions that pacman and the ghosts must do [pacman,ghost1,ghost2 etc]
+        bestActions = []
+        for agentIndex in range(numberOfAgents):
+            alphaBetaValues = []
+            actions = gameState.getLegalActions(agentIndex)
+            print(actions)
+            for action in actions:
+               #print(action)
+               alphaBetaValues.append(alphaBetaPrune(self,gameState.generateSuccessor(agentIndex, action),self.depth,0,agentIndex,NULL,NULL))
+            if agentIndex == 0:
+                bestValue = max(alphaBetaValues)
+            else:
+                bestValue = min(alphaBetaValues)
+            bestIndex = alphaBetaValues.index(bestValue)
+            bestActions.append(actions[bestIndex])           
+        print(bestActions)
+        return bestActions[0]
+
+def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
+        numberOfAgents = gameState.getNumAgents();
+        # if the state is a leaf -> return the evaluation value
+        if gameState.isWin() or gameState.isLose() or currDepth == maxDepth:
+          return self.evaluationFunction(gameState)
+        # if it is not a leaf -> look at the values of the succesors 
+        actions = gameState.getLegalActions(agentIndex)
+        # generate values for the succesors
+        bestValue = []
+        for action in actions:
+            succesorGamestate = gameState.generateSuccessor(agentIndex, action)
+            if agentIndex == numberOfAgents-1:
+              value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth + 1,0,0,0)
+            else:
+              value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,agentIndex+1,0,0)
+            # determine alpha/beta borders
+            if agentIndex is not 0 and (value < betaBorder or betaBorder is NULL):
+               betaBorder = value
+            elif value > alphaBorder or alphaBorder is NULL:
+               alphaBorder = value
+            bestValue.append(value)
+        # choose the MIN if you are a ghost and choose MAX if you are pacman
+        if agentIndex == 0:
+            return max(bestValue)
+        return min(bestValue)
+        
+
+          
+
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
