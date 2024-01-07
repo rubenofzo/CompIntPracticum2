@@ -215,7 +215,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         numberOfAgents = gameState.getNumAgents();
         # return a list of actions that pacman and the ghosts must do [pacman,ghost1,ghost2 etc]
         bestActions = []
-        for agentIndex in range(numberOfAgents):
+        for agentIndex in range(1):
             alphaBetaValues = []
             actions = gameState.getLegalActions(agentIndex)
             print(actions)
@@ -241,11 +241,13 @@ def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, a
         # generate values for the succesors
         bestValue = []
         for action in actions:
+            print(agentIndex)
             succesorGamestate = gameState.generateSuccessor(agentIndex, action)
-            if agentIndex == numberOfAgents-1:
-              value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth + 1,0,0,0)
-            else:
-              value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,agentIndex+1,0,0)
+            if agentIndex == 0  or agentIndex < numberOfAgents-1: # -1??? or +0?? 
+                if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
+                   value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,agentIndex+1,alphaBorder,betaBorder)
+            elif (alphaBorder is NULL or betaBorder is NULL) or betaBorder > alphaBorder: #  and agentIndex == numberOfAgents-1
+                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth + 1,0,alphaBorder,betaBorder)
             # determine alpha/beta borders
             if agentIndex is not 0 and (value < betaBorder or betaBorder is NULL):
                betaBorder = value
