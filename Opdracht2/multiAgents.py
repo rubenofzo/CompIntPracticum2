@@ -18,7 +18,7 @@ from xmlrpc.client import Boolean
 from util import manhattanDistance
 from game import Directions
 import random, util
-
+import itertools
 from game import Agent
 from pacman import GameState
 
@@ -212,36 +212,43 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        numberOfAgents = gameState.getNumAgents();
         # return a list of actions that pacman and the ghosts must do [pacman,ghost1,ghost2 etc]
         bestActions = []
-        for agentIndex in range(1):
-            alphaBetaValues = []
-            actions = gameState.getLegalActions(agentIndex)
-            print(actions)
-            for action in actions:
-               #print(action)
-               alphaBetaValues.append(alphaBetaPrune(self,gameState.generateSuccessor(agentIndex, action),self.depth,0,agentIndex,NULL,NULL))
-            if agentIndex == 0:
-                bestValue = max(alphaBetaValues)
-            else:
-                bestValue = min(alphaBetaValues)
-            bestIndex = alphaBetaValues.index(bestValue)
-            bestActions.append(actions[bestIndex])           
-        print(bestActions)
+        alphaBetaValues = []
+        actions = gameState.getLegalActions(0)
+        for action in actions:
+           alphaBetaValues.append(alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,0,0,NULL,NULL))
+        bestValue = max(alphaBetaValues)
+        bestIndex = alphaBetaValues.index(bestValue)
+        bestActions.append(actions[bestIndex])           
         return bestActions[0]
 
 def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
+
+    # if the state is a leaf -> return the evaluation value
+    if gameState.isWin() or gameState.isLose() or currDepth == maxDepth:
+       return self.evaluationFunction(gameState)
+    # if it is not a leaf -> look at the values of the succesors
+    if  agentIndex == 0: #if its pacmans turn -> just look at pacmans action and generate the tree from there
+       return pacmanAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, alphaBorder, betaBorder)
+    else: #if its a ghosts turn -> choose the best sequence of ghost actions (potentially a lot of actions)
+       return ghostAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder)
+
+    """
         numberOfAgents = gameState.getNumAgents();
         # if the state is a leaf -> return the evaluation value
         if gameState.isWin() or gameState.isLose() or currDepth == maxDepth:
           return self.evaluationFunction(gameState)
-        # if it is not a leaf -> look at the values of the succesors 
-        actions = gameState.getLegalActions(agentIndex)
+        # if it is not a leaf -> look at the values of the succesors
+        if  agentIndex == 0: #if its pacmans turn -> just look at pacmans action and generate the tree from there
+            actions = gameState.getLegalActions(agentIndex)
+        else: #if its a ghosts turn -> choose the best sequence of ghost actions (potentially a lot of actions)
+            actions = determineGhostActions
+         
         # generate values for the succesors
         bestValue = []
         for action in actions:
-            print(agentIndex)
+            #print(agentIndex)
             succesorGamestate = gameState.generateSuccessor(agentIndex, action)
             if agentIndex == 0  or agentIndex < numberOfAgents-1: # -1??? or +0?? 
                 if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
@@ -258,7 +265,49 @@ def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, a
         if agentIndex == 0:
             return max(bestValue)
         return min(bestValue)
-        
+    """
+def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alphaBorder, betaBorder):
+    actions = gameState.getLegalActions(0)
+    bestValue = []
+    for action in actions:
+            succesorGamestate = gameState.generateSuccessor(0, action)
+            #if the alphabeta borders dont prevent it -> just expand the state
+            if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder: 
+                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,1,alphaBorder,betaBorder)
+            # determine alpha/beta borders
+            if value > alphaBorder or alphaBorder is NULL:
+               alphaBorder = value
+            # return the value of this state
+            bestValue.append(value)
+    return max(bestValue)
+
+def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
+    # generate values for the succesors
+    numberOfAgents = gameState.getNumAgents(); 
+    print(numberOfAgents)
+    actionTuples =[]
+    for n in range(numberOfAgents): #1+??????
+        actionTuples.append(gameState.getLegalActions(1+n))
+    allActions = itertools.product(actionTuples)
+    bestValue = []
+    for actions in allActions:
+            print(actions)
+            for n in range(numberOfAgents):
+               succesorGamestate = gameState.generateSuccessor(n+1, actions[n])
+            #if agentIndex == 0  or agentIndex < numberOfAgents-1: # -1??? or +0?? 
+            #    if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
+            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,0,alphaBorder,betaBorder)
+            #elif (alphaBorder is NULL or betaBorder is NULL) or betaBorder > alphaBorder: #  and agentIndex == numberOfAgents-1
+            #    value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth + 1,0,alphaBorder,betaBorder)
+            # determine alpha/beta borders
+            if agentIndex is not 0 and (value < betaBorder or betaBorder is NULL):
+               betaBorder = value
+            #elif value > alphaBorder or alphaBorder is NULL:
+            #   alphaBorder = value
+            bestValue.append(value)
+    return min(bestValue)
+
+#def determineGhostActions():
 
           
 
