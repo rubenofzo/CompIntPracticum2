@@ -273,7 +273,7 @@ def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alp
             succesorGamestate = gameState.generateSuccessor(0, action)
             #if the alphabeta borders dont prevent it -> just expand the state
             if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder: 
-                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,1,alphaBorder,betaBorder)
+                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth+1,1,alphaBorder,betaBorder)
             # determine alpha/beta borders
             if value > alphaBorder or alphaBorder is NULL:
                alphaBorder = value
@@ -285,18 +285,22 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, agen
     # generate values for the succesors
     numberOfAgents = gameState.getNumAgents(); 
     print(numberOfAgents)
-    actionTuples =[]
-    for n in range(numberOfAgents): #1+??????
-        actionTuples.append(gameState.getLegalActions(1+n))
+    actionTuples = []
+    for n in range(numberOfAgents-1): #1+??????
+        newActions = gameState.getLegalActions(n+1)
+        print(newActions)
+        actionTuples.append(newActions)        
+    print(actionTuples)
     allActions = itertools.product(actionTuples)
+    print(list(allActions))
     bestValue = []
     for actions in allActions:
             print(actions)
             for n in range(numberOfAgents):
-               succesorGamestate = gameState.generateSuccessor(n+1, actions[n])
+               succesorGamestate = gameState.generateSuccessor(n, actions[n])
             #if agentIndex == 0  or agentIndex < numberOfAgents-1: # -1??? or +0?? 
             #    if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
-            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,0,alphaBorder,betaBorder)
+            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth+1,0,alphaBorder,betaBorder)
             #elif (alphaBorder is NULL or betaBorder is NULL) or betaBorder > alphaBorder: #  and agentIndex == numberOfAgents-1
             #    value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth + 1,0,alphaBorder,betaBorder)
             # determine alpha/beta borders
@@ -305,7 +309,9 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, agen
             #elif value > alphaBorder or alphaBorder is NULL:
             #   alphaBorder = value
             bestValue.append(value)
-    return min(bestValue)
+    print(bestValue)
+    minValue = min(bestValue)
+    return minValue
 
 #def determineGhostActions():
 
