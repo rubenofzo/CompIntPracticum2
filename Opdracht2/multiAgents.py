@@ -212,16 +212,17 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        # return a list of actions that pacman and the ghosts must do [pacman,ghost1,ghost2 etc]
-        bestActions = []
-        alphaBetaValues = []
+        finalValues = []
         actions = gameState.getLegalActions(0)
+        betaBorder = NULL
         for action in actions:
-           alphaBetaValues.append(alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,0,0,NULL,NULL))
-        bestValue = max(alphaBetaValues)
-        bestIndex = alphaBetaValues.index(bestValue)
-        bestActions.append(actions[bestIndex])           
-        return bestActions[0]
+            value = alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,0,0,NULL,betaBorder)
+            finalValues.append(value)
+            #if betaBorder is NULL or value < betaBorder:
+            #    betaBorder = value
+        bestValue = max(finalValues)
+        bestAction = finalValues.index(bestValue)
+        return bestAction  
 
 def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
 
@@ -232,7 +233,7 @@ def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, a
     if  agentIndex == 0: #if its pacmans turn -> just look at pacmans action and generate the tree from there
        return pacmanAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, alphaBorder, betaBorder)
     else: #if its a ghosts turn -> choose the best sequence of ghost actions (potentially a lot of actions)
-       return ghostAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder)
+       return ghostAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, alphaBorder, betaBorder)
 
     """
         numberOfAgents = gameState.getNumAgents();
@@ -266,57 +267,74 @@ def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, a
             return max(bestValue)
         return min(bestValue)
     """
+
+#function used to handle ghosts expanding all pacman states
 def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alphaBorder, betaBorder):
     actions = gameState.getLegalActions(0)
     bestValue = []
     for action in actions:
+            # the value is initialised as the worst possible 
+            value = 1000 
             succesorGamestate = gameState.generateSuccessor(0, action)
             #if the alphabeta borders dont prevent it -> just expand the state
-            if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder: 
+            if alphaBorder is NULL or betaBorder is NULL or betaBorder > alphaBorder: 
                 value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth+1,1,alphaBorder,betaBorder)
             # determine alpha/beta borders
-            if value > alphaBorder or alphaBorder is NULL:
+            if alphaBorder is NULL or value > alphaBorder:
                alphaBorder = value
             # return the value of this state
             bestValue.append(value)
+    return min(bestValue)
+
+#function used to handle pacman expanding all ghost states
+def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alphaBorder, betaBorder):
+    numberOfAgents = gameState.getNumAgents(); 
+    # find all possible combinations of actions
+    allActions = allCombinations(gameState,numberOfAgents)
+    bestValue = []
+    # for each set of actions, try to expand the state 
+    for actions in allActions:
+            # the value is initialised as the worst possible 
+            value = -1000
+            # do all actions
+            for n in range(numberOfAgents-1):
+               succesorGamestate = gameState.generateSuccessor(n+1, actions[n])
+            # expand a state if one of the borders is uninnitialised and if the alphabetaborders don't prevent it
+            if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
+                 value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth+1,0,alphaBorder,betaBorder)
+            # determine new beta border
+            if betaBorder is NULL or value < betaBorder:
+               betaBorder = value
+            bestValue.append(value)
     return max(bestValue)
 
-def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
-    # generate values for the succesors
-    numberOfAgents = gameState.getNumAgents(); 
-    print(numberOfAgents)
-    actionTuples = []
-    for n in range(numberOfAgents-1): #1+??????
-        newActions = gameState.getLegalActions(n+1)
-        print(newActions)
-        actionTuples.append(newActions)        
-    print(actionTuples)
-    allActions = itertools.product(actionTuples)
-    print(list(allActions))
-    bestValue = []
-    for actions in allActions:
-            print(actions)
-            for n in range(numberOfAgents):
-               succesorGamestate = gameState.generateSuccessor(n, actions[n])
-            #if agentIndex == 0  or agentIndex < numberOfAgents-1: # -1??? or +0?? 
-            #    if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
-            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth+1,0,alphaBorder,betaBorder)
-            #elif (alphaBorder is NULL or betaBorder is NULL) or betaBorder > alphaBorder: #  and agentIndex == numberOfAgents-1
-            #    value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth + 1,0,alphaBorder,betaBorder)
-            # determine alpha/beta borders
-            if agentIndex is not 0 and (value < betaBorder or betaBorder is NULL):
-               betaBorder = value
-            #elif value > alphaBorder or alphaBorder is NULL:
-            #   alphaBorder = value
-            bestValue.append(value)
-    print(bestValue)
-    minValue = min(bestValue)
-    return minValue
+def allCombinations(gameState,numberOfAgents):
+    xss = []
+    for i in range(numberOfAgents-1):
+        newActions = gameState.getLegalActions(i+1)
+        xss.append(newActions)
+    #print("all actions", xss)
+    ys = []
+    for xs in xss:
+        result = addOneCombination(ys, xs)
+        ys = result
+    return ys
 
-#def determineGhostActions():
 
-          
-
+def addOneCombination(ys, xs): 
+    if ys == []:
+      for x in xs:
+        ys.append([x])
+      return ys
+    zs = []
+    for x in xs:
+      for y in ys:
+         #print("y is ",y)
+         #print("x is ",x)
+         y.append(x)
+         zs.append(y)
+         #print("together is ",zs)
+    return zs
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
