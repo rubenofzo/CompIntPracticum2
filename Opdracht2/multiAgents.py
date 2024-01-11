@@ -169,7 +169,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         bestAction = NULL
         bestValue = -1000
-        actions = gameState.getLegalPacmanActions()
+        actions = gameState.getLegalActions(0)
         for action in actions:
             newState = gameState.generateSuccessor(0, action)
             value = minimax(self, newState, self.depth, 1)
@@ -178,25 +178,39 @@ class MinimaxAgent(MultiAgentSearchAgent):
                bestAction = action
         return bestAction
 
+
+    # Minimax loop
+
 def minimax(self, gameState: GameState, depth: INT, agentIndex: INT):
     numAgents = gameState.getNumAgents()
+    numGhosts = numAgents - 1
+    ghostValues = []
     actions = gameState.getLegalActions(agentIndex)
+
+    #If the game has ended or a leaf node is reached the value of the current gameState is returned
+
     if depth == 0 or gameState.isWin() or gameState.isLose():
-         return self.evaluationFunction
+         return self.evaluationFunction(gameState)
+
+     # Otherwise, the loop continues.
+
     else:
+        # If it is pacmans turn it enters this if-statement. The value is set to a low number to help us pick the bestValue 
+
          if agentIndex == 0:
             bestValue = -10000
             for action in actions:
                       newNode = gameState.generateSuccessor(0, action)
-                      value = minimax(self, newNode, depth -1, 1 % numAgents)
+                      value = minimax(self, newNode, depth - 1, 1 % numAgents)
                       bestValue = max(bestValue, value)
             return bestValue
          else:
             bestValue = +10000
             for action in actions:
                      newNode = gameState.generateSuccessor(agentIndex, action)
-                     value = minimax(self, newNode, depth -1, (agentIndex + 1) % numAgents)
+                     value = minimax(self, newNode, depth - 1, (agentIndex + 1) % numAgents)
                      bestValue = min(bestValue, value)
+            ghostValues.append(bestValue)
             return bestValue
          
             
