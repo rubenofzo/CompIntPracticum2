@@ -255,8 +255,13 @@ fix indexes
     +2-2a vary depth 
 
 let depth only increment when ghost moves
-    +7-1b till 7-2a
+    +7-1b till 7-1c
 
+swap when alpha and beta borders change
+    +1-4
+
+only passing beta/alpha border that you generate
+    nothing
 
 """
 
@@ -285,12 +290,12 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alph
             succesorGamestate = gameState.generateSuccessor(nextAgent, action)
             #if the alphabeta borders dont prevent it -> expand the state
             if alphaBorder is NULL or betaBorder is NULL or betaBorder > alphaBorder: 
-                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,alphaBorder,betaBorder)
+                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,NULL,betaBorder) #note that we only pass the betaBorder
             # determine new alpha border
             # but only if a new value got added and if that value is bigger than the current a border 
             #             or if the alpha border was not initialised yet
-            if alphaBorder is NULL or (value != 1000 and value > alphaBorder):
-               alphaBorder = value
+            if betaBorder is NULL or (value != -1000 and value < betaBorder):
+               betaBorder = value
             # add the value of this state
             bestValue.append(value)
     #ghosts will choose to move towards the worst pacman state 
@@ -312,16 +317,14 @@ def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alp
             for n in range(numberOfGhosts):
                succesorGamestate = gameState.generateSuccessor(n+1, actions[n])
             # if the alphabeta borders dont prevent it -> expand the state 
-            if alphaBorder is NULL or betaBorder is NULL or alphaBorder < betaBorder:
-                 value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,alphaBorder,betaBorder)
+            if alphaBorder is NULL or betaBorder is NULL or betaBorder > alphaBorder:
+                 value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,alphaBorder,NULL) #note that we only pass the alphaBorder
             # determine new beta border
             # but only if a new value got added and if that value is smaller than the current b border 
             #             or if the beta border was not initialised yet
-            if betaBorder is NULL or (value != -1000 and value < betaBorder):
-               betaBorder = value
+            if alphaBorder is NULL or (value != 1000 and value > alphaBorder):
+               alphaBorder = value
             # add the value of this state
-            print("value",value)
-            print("beta",betaBorder)
             bestValue.append(value)
     return max(bestValue) #pacman chooses to move to the best outcome
 
