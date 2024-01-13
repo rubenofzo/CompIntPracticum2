@@ -12,7 +12,6 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-from asyncio.windows_events import NULL
 from ctypes.wintypes import BOOLEAN, INT
 from xmlrpc.client import Boolean
 from util import manhattanDistance
@@ -231,10 +230,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         actions = gameState.getLegalActions(0)
         # the next action will happen by the ghosts
         nextAgent = 1
-        alphaBorder = NULL
+        alphaBorder = None
         for action in actions:
             # get the value of the miniMax tree for each action
-            value = alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,0,nextAgent,alphaBorder,NULL)
+            value = alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,0,nextAgent,alphaBorder,None)
             finalValues.append(value)
             #if alphaBorder is NULL or value > alphaBorder:
             #    alphaBorder = value
@@ -263,6 +262,9 @@ swap when alpha and beta borders change
 only passing beta/alpha border that you generate
     nothing
 
+stopped expanding state if prevention happens
+
+
 """
 
 def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
@@ -272,29 +274,30 @@ def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, a
     # if it is not a leaf -> look at the values of the succesors
     # if its pacmans turn -> assume the worst outcome of all possible ghost moves and get that value
     if agentIndex == 0: 
-       return pacmanAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, alphaBorder, betaBorder)
+       return pacmanAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, alphaBorder)
     #if its a ghosts turn -> assume pacman will choose the best possible action and get that value
-    return ghostAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth+1, alphaBorder, betaBorder)
+    return ghostAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth+1, betaBorder)
 
 #function used to handle ghosts expanding all pacman states
-def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alphaBorder, betaBorder):
+def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, previousAlfaBorder):
     # pacman will play next turn
     nextAgent = 0
     # get pacmans actions
     actions = gameState.getLegalActions(nextAgent)
     bestValue = []
+    betaBorder = None
     for action in actions:
-            # the value is initialised as the worst possible (so this action will not get chosen if this branch gets pruned)
-            value = 1000
             #do action
             succesorGamestate = gameState.generateSuccessor(nextAgent, action)
+            #if the alphabetaboders prevent it -> stop expening for this state
+            if previousAlfaBorder is not None and betaBorder is not None and betaBorder <= previousAlfaBorder :
+                return min(bestValue)
             #if the alphabeta borders dont prevent it -> expand the state
-            if alphaBorder is NULL or betaBorder is NULL or betaBorder > alphaBorder: 
-                value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,NULL,betaBorder) #note that we only pass the betaBorder
+            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,None,betaBorder) #note that we only pass the betaBorder
             # determine new alpha border
             # but only if a new value got added and if that value is bigger than the current a border 
             #             or if the alpha border was not initialised yet
-            if betaBorder is NULL or (value != -1000 and value < betaBorder):
+            if betaBorder is None or value < betaBorder:
                betaBorder = value
             # add the value of this state
             bestValue.append(value)
@@ -302,27 +305,29 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alph
     return min(bestValue) 
 
 #function used to handle pacman expanding all ghost states
-def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, alphaBorder, betaBorder):
+def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, previousBetaBorder):
     # the ghosts will play next turn
     nextAgent = 1
     numberOfGhosts = gameState.getNumAgents() - 1; 
     # find all possible combinations of actions
     allActions = allCombinations(gameState,numberOfGhosts)
     bestValue = []
+    alphaBorder = None
     # for each set of actions, try to expand the state 
     for actions in allActions:
-            # the value is initialised as the worst possible 
-            value = -1000
             # do all actions in 'actions' for each agent
             for n in range(numberOfGhosts):
                succesorGamestate = gameState.generateSuccessor(n+1, actions[n])
+            if alphaBorder is not None and previousBetaBorder is not None and alphaBorder >= previousBetaBorder:
+                #if the alphabetaboders prevent it -> stop expening for this state
+                #print("ignored as ",betaBorder," bigger then ",alphaBorder)
+                return max(bestValue)
             # if the alphabeta borders dont prevent it -> expand the state 
-            if alphaBorder is NULL or betaBorder is NULL or betaBorder > alphaBorder:
-                 value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,alphaBorder,NULL) #note that we only pass the alphaBorder
+            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,alphaBorder,None) #note that we only pass the alphaBorder                
             # determine new beta border
             # but only if a new value got added and if that value is smaller than the current b border 
             #             or if the beta border was not initialised yet
-            if alphaBorder is NULL or (value != 1000 and value > alphaBorder):
+            if alphaBorder is None or value > alphaBorder:
                alphaBorder = value
             # add the value of this state
             bestValue.append(value)
