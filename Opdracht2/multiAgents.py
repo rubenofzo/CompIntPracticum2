@@ -166,7 +166,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        bestAction = NULL
+        bestAction = None
         bestValue = -1000
         actions = gameState.getLegalActions(0)
         for action in actions:
