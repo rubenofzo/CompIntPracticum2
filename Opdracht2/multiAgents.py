@@ -31,7 +31,6 @@ class ReflexAgent(Agent):
     headers.
     """
 
-
     def getAction(self, gameState: GameState):
         """
         You do not need to change this method, but you're welcome to.
@@ -79,7 +78,7 @@ class ReflexAgent(Agent):
         #calculate the total distance of the fastest path (using manhattan distances) between all foods
         fastestPathThroughFood = minDistanceList(newPos, newFood.asList())
         #calculate the distance to the closest ghost
-        closestGhostDistance = min(map(lambda xy2 : manhattanDistance(newPos,xy2), newGhostPositions))
+        closestGhostDistance = min([manhattanDistance(newPos,xy2) for xy2 in newGhostPositions])
         #if a ghost is close and not scared => avoid succesor
         if (closestGhostDistance < 2.0 and min(newScaredTimes)==0):
             return -fastestPathThroughFood -1000
@@ -92,9 +91,7 @@ def minDistanceList(position,positionList):
     if positionList == []:
         return 0
     #make a list of mahattan distances from the position to everything in the positionList
-    distanceList = []
-    for pos in positionList:
-         distanceList.append(manhattanDistance(position,pos))
+    distanceList = [manhattanDistance(position,pos) for pos in positionList]
     #find the closest coordinate in the list and the distance to it
     closestDistance = min(distanceList)
     positionFound = positionList[distanceList.index(closestDistance)]
@@ -225,6 +222,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
+        #print("max depth ",self.depth)
+        #print("pacman plays")
         finalValues = []
         # first get the possible actions pacman can make from this state
         actions = gameState.getLegalActions(0)
@@ -233,7 +232,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         alphaBorder = None
         for action in actions:
             # get the value of the miniMax tree for each action
-            value = alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,0,nextAgent,alphaBorder,None)
+            value = alphaBetaPrune(self,gameState.generateSuccessor(0, action),self.depth,nextAgent,alphaBorder,None)
             finalValues.append(value)
             #if alphaBorder is NULL or value > alphaBorder:
             #    alphaBorder = value
@@ -267,19 +266,21 @@ stopped expanding state if prevention happens
 
 """
 
-def alphaBetaPrune(self,gameState: GameState, maxDepth, currDepth, agentIndex, alphaBorder, betaBorder):
+def alphaBetaPrune(self,gameState: GameState, currDepth, agentIndex, alphaBorder, betaBorder):
     # if the state is a leaf -> return the evaluation value
-    if gameState.isWin() or gameState.isLose() or currDepth == maxDepth:
+    if gameState.isWin() or gameState.isLose() or currDepth <= 0:
        return self.evaluationFunction(gameState)
     # if it is not a leaf -> look at the values of the succesors
     # if its pacmans turn -> assume the worst outcome of all possible ghost moves and get that value
     if agentIndex == 0: 
-       return pacmanAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth, alphaBorder)
+       #print("pacman plays on depth ",currDepth)
+       return pacmanAlphaBetaPruneLoop(self,gameState, currDepth, alphaBorder)
     #if its a ghosts turn -> assume pacman will choose the best possible action and get that value
-    return ghostAlphaBetaPruneLoop(self,gameState, maxDepth, currDepth+1, betaBorder)
+    #print("ghosts plays on depth ",currDepth)
+    return ghostAlphaBetaPruneLoop(self,gameState, currDepth, betaBorder)
 
 #function used to handle ghosts expanding all pacman states
-def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, previousAlfaBorder):
+def ghostAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBorder):
     # pacman will play next turn
     nextAgent = 0
     # get pacmans actions
@@ -293,7 +294,7 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, prev
             if previousAlfaBorder is not None and betaBorder is not None and betaBorder <= previousAlfaBorder :
                 return min(bestValue)
             #if the alphabeta borders dont prevent it -> expand the state
-            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,None,betaBorder) #note that we only pass the betaBorder
+            value = alphaBetaPrune(self,succesorGamestate,currDepth-1,nextAgent,None,betaBorder) #note that we only pass the betaBorder
             # determine new alpha border
             # but only if a new value got added and if that value is bigger than the current a border 
             #             or if the alpha border was not initialised yet
@@ -305,7 +306,7 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, prev
     return min(bestValue) 
 
 #function used to handle pacman expanding all ghost states
-def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, previousBetaBorder):
+def pacmanAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousBetaBorder):
     # the ghosts will play next turn
     nextAgent = 1
     numberOfGhosts = gameState.getNumAgents() - 1; 
@@ -323,7 +324,7 @@ def pacmanAlphaBetaPruneLoop(self,gameState: GameState, maxDepth, currDepth, pre
                 #print("ignored as ",betaBorder," bigger then ",alphaBorder)
                 return max(bestValue)
             # if the alphabeta borders dont prevent it -> expand the state 
-            value = alphaBetaPrune(self,succesorGamestate,maxDepth,currDepth,nextAgent,alphaBorder,None) #note that we only pass the alphaBorder                
+            value = alphaBetaPrune(self,succesorGamestate,currDepth,nextAgent,alphaBorder,None) #note that we only pass the alphaBorder                
             # determine new beta border
             # but only if a new value got added and if that value is smaller than the current b border 
             #             or if the beta border was not initialised yet
