@@ -367,7 +367,55 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        bestAction = None
+        bestValue = -1000
+        actions = gameState.getLegalActions(0)
+        for action in actions:
+            newState = gameState.generateSuccessor(0, action)
+            value = expectimax(self, newState, self.depth, 1)
+            if value > bestValue:
+               bestValue = value
+               bestAction = action
+        return bestAction
+
+def expectimax(self, gameState: GameState, depth: INT, agentIndex: INT):
+    numAgents = gameState.getNumAgents()
+    ghostValues = []
+    actions = gameState.getLegalActions(agentIndex)
+
+    #If the game has ended or a leaf node is reached the value of the current gameState is returned
+
+    if depth == 0 or gameState.isWin() or gameState.isLose():
+         return self.evaluationFunction(gameState)
+
+     # Otherwise, the loop continues.
+
+    else:
+        # If it is pacmans turn it enters this if-statement. The value is set to a low number to help us pick the bestValue 
+
+         if agentIndex == 0:
+            bestValue = -10000
+            for action in actions:
+                if action == Directions.STOP:
+                      newNode = gameState.generateSuccessor(0, action)
+                      value = (expectimax(self, newNode, depth, 1 % numAgents) - 5)
+                      bestValue = max(bestValue, value)
+                else:
+                      newNode = gameState.generateSuccessor(0, action)
+                      value = expectimax(self, newNode, depth, 1 % numAgents)
+                      bestValue = max(bestValue, value)
+            return bestValue
+         else:
+            ghostValues = []
+            for action in actions:
+                     newNode = gameState.generateSuccessor(agentIndex, action)
+                     if agentIndex == (numAgents-1):
+                         value = expectimax(self, newNode, depth-1, (agentIndex + 1) % numAgents)
+                         ghostValues.append(value)
+                     else:
+                         value = minimax(self, newNode, depth, (agentIndex + 1) % numAgents)
+                         ghostValues.append(value)
+            return (sum(ghostValues)/len(ghostValues))
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
