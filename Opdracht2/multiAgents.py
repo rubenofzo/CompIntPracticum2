@@ -197,14 +197,17 @@ def minimax(self, gameState: GameState, depth: INT, agentIndex: INT):
             bestValue = -10000
             for action in actions:
                       newNode = gameState.generateSuccessor(0, action)
-                      value = minimax(self, newNode, depth - 1, 1 % numAgents)
+                      value = minimax(self, newNode, depth, 1 % numAgents)
                       bestValue = max(bestValue, value)
             return bestValue
          else:
-            bestValue = +10000
+            bestValue = +10000 
             for action in actions:
                      newNode = gameState.generateSuccessor(agentIndex, action)
-                     value = minimax(self, newNode, depth - 1, (agentIndex + 1) % numAgents)
+                     if agentIndex == (numAgents-1):
+                         value = minimax(self, newNode, depth-1, (agentIndex + 1) % numAgents)
+                     else:
+                         value = minimax(self, newNode, depth, (agentIndex + 1) % numAgents)
                      bestValue = min(bestValue, value)
             ghostValues.append(bestValue)
             return bestValue
