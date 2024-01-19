@@ -303,17 +303,17 @@ def alphaBetaPrune(self,gameState: GameState, currDepth, agentIndex, alphaBorder
        return pacmanAlphaBetaPruneLoop(self,gameState, currDepth, betaBorder)
     #if its a ghosts turn -> assume pacman will choose the best possible action and get that value
     #print("ghosts plays on depth ",currDepth)
-    return ghostAlphaBetaPruneLoop(self,gameState, currDepth, alphaBorder,agentIndex)
+    return ghostAlphaBetaPruneLoop(self,gameState, currDepth, alphaBorder,betaBorder,agentIndex)
 
 #function used to handle ghosts expansion (by pacman)
-def ghostAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBorder,agentIndex):
+def ghostAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBorder,previousBetaBorder,agentIndex):
     numAgents = gameState.getNumAgents()
     numGhosts = numAgents - 1
     actions = gameState.getLegalActions(agentIndex)
     bestValue = 10000 
-    betaBorder = None
+    betaBorder = previousBetaBorder
     for action in actions:
-        if previousAlfaBorder is not None and betaBorder is not None and betaBorder <= previousAlfaBorder :
+        if previousAlfaBorder is not None and betaBorder is not None and betaBorder <= previousAlfaBorder:
             #if the alphabetaboders prevent it -> stop expening for this state
             #print("ignored as ",betaBorder," bigger then ",alphaBorder)
             return bestValue
@@ -322,7 +322,7 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBo
         if agentIndex == numGhosts:
             value = alphaBetaPrune(self, newNode, currDepth-1, (agentIndex + 1) % numAgents,None,betaBorder)
         else:
-            value = alphaBetaPrune(self, newNode, currDepth, (agentIndex + 1) % numAgents,None,betaBorder)
+            value = alphaBetaPrune(self, newNode, currDepth, (agentIndex + 1) % numAgents,previousAlfaBorder,betaBorder)
         bestValue = min(bestValue, value)
         
         # determine new alpha border
@@ -351,7 +351,7 @@ def pacmanAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousBetaB
         # but only if a new value got added and if that value is smaller than the current a border 
         #             or if the alfa border was not initialised yet
         if alphaBorder is None or value > alphaBorder:
-                alphaBorder = value
+                alphaBorder = bestValue
     return bestValue
 
 ## function used to generate all possible combinations of ghost actions
