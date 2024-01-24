@@ -71,7 +71,7 @@ class ReflexAgent(Agent):
         """
         # Useful information you can extract from a GameState (pacman.py)
         if (action == "stop"):
-            return -1000
+            return -100
 
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
@@ -262,8 +262,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        #print("max depth ",self.depth)
-        #print("pacman plays")
         bestAction = None
         bestValue = -1000
         # first get the possible actions pacman can make from this state
@@ -297,7 +295,7 @@ def alphaBetaPrune(self,gameState: GameState, currDepth, agentIndex, alphaBorder
     #print("ghosts plays on depth ",currDepth)
     return ghostAlphaBetaPruneLoop(self,gameState, currDepth, alphaBorder,betaBorder,agentIndex)
 
-#function used to handle ghosts expansion (by pacman)
+#function used to handle ghost state expansion 
 def ghostAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBorder,previousBetaBorder,agentIndex):
     numAgents = gameState.getNumAgents()
     numGhosts = numAgents - 1
@@ -323,7 +321,7 @@ def ghostAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBo
             betaBorder = value
     return bestValue
 
-#function used to handle the expansion of pacman states (by the ghosts)
+#function used to handle pacman state expansion
 def pacmanAlphaBetaPruneLoop(self,gameState: GameState, currDepth, previousAlfaBorder, previousBetaBorder):
     numAgents = gameState.getNumAgents()
     actions = gameState.getLegalActions(0)
@@ -472,18 +470,16 @@ def betterEvaluationFunction(currentGameState: GameState):
     # Choose one of the best actions
     if legalMoves != []:
         scores = [evaluationFunction(currentGameState, action) for action in legalMoves]    
-    else:
-        newPos = currentGameState.getPacmanPosition()
-        newGhostStates = currentGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        newGhostPositions = currentGameState.getGhostPositions()
-        closestGhostDistance = min([manhattanDistance(newPos,ghostPos) for ghostPos in newGhostPositions])
-        if min(newScaredTimes)==0 and closestGhostDistance <= 2.0:
-            return -1000
-        else:
-            return 1000
-    bestScore = max(scores)
-    return bestScore
+        return max(scores)
+    newPos = currentGameState.getPacmanPosition()
+    newGhostStates = currentGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+    newGhostPositions = currentGameState.getGhostPositions()
+    closestGhostDistance = min([manhattanDistance(newPos,ghostPos) for ghostPos in newGhostPositions])
+    if min(newScaredTimes)==0 and closestGhostDistance <= 2.0:
+        return -1000
+    return 1000
+
     
 
 # Abbreviation
