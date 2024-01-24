@@ -1,8 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Opdracht2"
+    "\\Opdracht2",
+    "\\Opdracht2\\test_cases",
+    "\\Opdracht2\\test_cases\\q3"
   ],
-  "SelectedNode": "\\Opdracht2\\multiAgents.py",
+  "SelectedNode": "\\Opdracht2\\game.py",
   "PreviewInSolutionExplorer": false
 }
