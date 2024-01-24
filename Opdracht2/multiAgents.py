@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from argparse import Action
 from ctypes.wintypes import BOOLEAN, INT
 from xmlrpc.client import Boolean
 from util import manhattanDistance
@@ -69,21 +70,24 @@ class ReflexAgent(Agent):
         to create a masterful evaluation function.
         """
         # Useful information you can extract from a GameState (pacman.py)
+        if (action == "stop"):
+            return -1000
+
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         newGhostPositions = successorGameState.getGhostPositions()
-        #calculate the total distance of the fastest path (using manhattan distances) between all foods
-        fastestPathThroughFood = minDistanceList(newPos, newFood.asList())
         #calculate the distance to the closest ghost
         closestGhostDistance = min([manhattanDistance(newPos,xy2) for xy2 in newGhostPositions])
         #if a ghost is close and not scared => avoid succesor
-        if (closestGhostDistance < 2.0 and min(newScaredTimes)==0):
-            return -fastestPathThroughFood -1000
+        if (closestGhostDistance <= 2.0 and min(newScaredTimes)==0):
+            return -1000
+        newFood = successorGameState.getFood()
+        #calculate the total distance of the fastest path (using manhattan distances) between all foods
+        fastestPathThroughFood = minDistanceList(newPos, newFood.asList())
         #if not then return the negative of the distance to all foods (as a bigger number should be better)
-        return -fastestPathThroughFood 
+        return -fastestPathThroughFood  
 
 #finds the cheapest path from position to all positionsLeft
 def minDistanceList(position,positionList):
@@ -367,9 +371,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         return bestAction
 
 def expectimax(self, gameState: GameState, depth: INT, agentIndex: INT):
-    
     # Gets the number of agents (necessary for calculating the number of ghosts)
-
     numAgents = gameState.getNumAgents()
 
     # Creates list for keeping all ghost values
@@ -433,9 +435,8 @@ def expectimax(self, gameState: GameState, depth: INT, agentIndex: INT):
                          #Add the current value to the list keeping all ghostvalues
 
                          ghostValues.append(value)
-
+            
             # Returns the average of all the ghostvalues 
-
             return (sum(ghostValues)/len(ghostValues))
 
 def betterEvaluationFunction(currentGameState: GameState):
@@ -445,8 +446,45 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    def evaluationFunction(currentGameState: GameState, action):
+        if (action == "stop"):
+            return -100
+
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        newPos = successorGameState.getPacmanPosition()
+        newGhostStates = successorGameState.getGhostStates()
+        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newGhostPositions = successorGameState.getGhostPositions()
+        #calculate the distance to the closest ghost
+        closestGhostDistance = min([manhattanDistance(newPos,xy2) for xy2 in newGhostPositions])
+        #if a ghost is close and not scared => avoid succesor
+        if (closestGhostDistance <= 2.0 and min(newScaredTimes)==0):
+            return -1000
+        newFood = successorGameState.getFood()
+        #calculate the total distance of the fastest path (using manhattan distances) between all foods
+        fastestPathThroughFood = minDistanceList(newPos, newFood.asList())
+        #if not then return the negative of the distance to all foods (as a bigger number should be better)
+        return -fastestPathThroughFood 
+
+
+    legalMoves = currentGameState.getLegalActions()
+    # Choose one of the best actions
+    if legalMoves != []:
+        scores = [evaluationFunction(currentGameState, action) for action in legalMoves]    
+    else:
+        newPos = currentGameState.getPacmanPosition()
+        newGhostStates = currentGameState.getGhostStates()
+        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newGhostPositions = currentGameState.getGhostPositions()
+        closestGhostDistance = min([manhattanDistance(newPos,ghostPos) for ghostPos in newGhostPositions])
+        if min(newScaredTimes)==0 and closestGhostDistance <= 2.0:
+            return -1000
+        else:
+            return 1000
+    bestScore = max(scores)
+    return bestScore
+    
 
 # Abbreviation
 better = betterEvaluationFunction
