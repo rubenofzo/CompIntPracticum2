@@ -457,7 +457,7 @@ def betterEvaluationFunction(currentGameState: GameState):
         #calculate the distance to the closest ghost
         closestGhostDistance = min([manhattanDistance(newPos,xy2) for xy2 in newGhostPositions])
         #if a ghost is close and not scared => avoid succesor
-        if (closestGhostDistance <= 2.0 and min(newScaredTimes)==0):
+        if (closestGhostDistance <= 2 and min(newScaredTimes)== 0):
             return -1000
         newFood = successorGameState.getFood()
         #calculate the total distance of the fastest path (using manhattan distances) between all foods
@@ -465,19 +465,24 @@ def betterEvaluationFunction(currentGameState: GameState):
         #if not then return the negative of the distance to all foods (as a bigger number should be better)
         return -fastestPathThroughFood 
 
-
+    # get all possible pacman actions
     legalMoves = currentGameState.getLegalActions()
-    # Choose one of the best actions
+
+    # if actions are given => evaluate the actions and return the best one
     if legalMoves != []:
         scores = [evaluationFunction(currentGameState, action) for action in legalMoves]    
         return max(scores)
+    # otherwise look if you are dead or alive
     newPos = currentGameState.getPacmanPosition()
     newGhostStates = currentGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
     newGhostPositions = currentGameState.getGhostPositions()
+    # determine closest ghost
     closestGhostDistance = min([manhattanDistance(newPos,ghostPos) for ghostPos in newGhostPositions])
-    if min(newScaredTimes)==0 and closestGhostDistance <= 2.0:
+    # if a ghost is very close we are dead => avoid this state
+    if min(newScaredTimes)==0 and closestGhostDistance == 0:
         return -1000
+    # if a ghost is not close we win => try to go to this state
     return 1000
 
     
